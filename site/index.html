@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="中国七个风格指数的估值总览：PE、PB、股息率、ERP、历史分位，与沪深300对照。">
+  <meta name="theme-color" content="#0b1119">
+  <title>七个指数，一张估值地图 · CHINA INDEX LAB</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="value">
+  <div class="page-grid" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark">C</span><span class="brand-text"><b>CHINA INDEX LAB</b><small>CHINA VALUATION TERMINAL</small></span></a>
+    <div class="status-pill"><span class="dot"></span><span>数据截至 <b id="hubAsOf">—</b></span></div>
+  </header>
+  <nav class="etf-nav" aria-label="指数切换">
+    <a href="index.html" class="is-active">总览</a>
+    <a href="value100.html">价值100</a>
+    <a href="fcf.html">自由现金流</a>
+    <a href="dividend.html">中证红利</a>
+    <a href="soe-dividend.html">央企红利</a>
+    <a href="tech100.html">科技100</a>
+    <a href="chinext.html">创业板指</a>
+    <a href="star.html">科创50</a>
+    <span class="etf-nav-note">七个指数 · 沪深300 为基准</span>
+  </nav>
+
+  <main>
+    <section class="hero hub-hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow"><span class="eyebrow-line"></span>价值100 · 自由现金流 · 中证红利 · 央企红利 · 科技100 · 创业板指 · 科创50</div>
+          <h1>七个指数，<br><em>一张估值地图。</em></h1>
+          <p class="hero-lede">同一套 PE、PB、股息率与风险溢价框架，七种不同的风格与行业暴露。用沪深300做参照，看清每个指数相对自己的历史处在什么位置。</p>
+        </div>
+        <div class="card gauge-card hub-bench">
+          <div class="gauge-head"><span class="micro">BENCHMARK · CSI 300</span><span class="regime" id="hubBenchRegime">—</span></div>
+          <div class="hub-bench-value"><b id="hubBenchPe">—</b><span>x</span></div>
+          <p>当前 PE-TTM · PB <b id="hubBenchPb">—</b>x · 股息率 <b id="hubBenchDy">—</b>%</p>
+          <div class="hub-bench-foot"><span>综合分位 <b id="hubBenchComp">—</b></span><span>ERP <b id="hubBenchErp">—</b>%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hub-grid" id="hubGrid" aria-label="七个指数当前快照"></section>
+
+    <section class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">SIDE BY SIDE</span><h2>七个指数，一张对照表</h2></div>
+        <p>PE、PB、股息率、ERP 为当前值；综合分位由 PE、PB、ERP 三项等权，越高越贵。</p>
+      </div>
+      <div class="card hub-table reveal">
+        <div class="table-wrap">
+          <table class="spy-table">
+            <thead><tr><th>指数</th><th>收盘</th><th>PE</th><th>PB</th><th>股息率</th><th>ERP</th><th>综合</th><th>vs 300</th><th>1Y 相对</th></tr></thead>
+            <tbody id="hubTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">HOW TO READ</span><h2>先看自己的历史，再看沪深300</h2></div>
+        <p>综合分位由 PE、PB、ERP 三项等权；股息率单独展示，不进入综合分位，因为历史序列不统一。沪深300对比只回答“相对宽基贵不贵”，不回答“应该买哪只”。</p>
+      </div>
+      <div class="disclaimer">
+        <p>本页面由公开数据构建，仅用于研究与教育，不构成任何证券、基金或投资策略的推荐。历史分位不代表未来回归，价格指数不含股息。</p>
+        <p>CHINA INDEX LAB · 页面生成 <b id="hubGenerated">—</b> · 当前 PE/PB/股息率来源：韭圈儿 · 2026-11-13</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-left"><span class="brand-mark small">C</span><span><b>CHINA INDEX LAB</b><small>Valuation, with context.</small></span></div>
+    <div class="footer-right"><span>价值100 · 自由现金流 · 中证红利 · 央企红利 · 科技100 · 创业板指 · 科创50</span><span>© 2026 CHINA INDEX LAB</span></div>
+  </footer>
+
+  <script src="data/hub.js"></script>
+  <script src="hub.js"></script>
+</body>
+</html>

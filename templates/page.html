@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="中国七个风格指数的估值罗盘：PE-TTM、PB、股息率、风险溢价，以及和沪深300的对比。">
+  <meta name="theme-color" content="#0b1119">
+  <title>指数估值罗盘 · CHINA INDEX LAB</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="value">
+  <div class="page-grid" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="返回总览">
+      <span class="brand-mark">C</span>
+      <span class="brand-text"><b>CHINA INDEX LAB</b><small>CHINA VALUATION TERMINAL</small></span>
+    </a>
+    <div class="status-pill"><span class="dot"></span><span>数据截至 <b id="topDate">2026.11.13</b></span></div>
+  </header>
+
+  <nav class="etf-nav" aria-label="指数切换">
+    <a href="index.html">总览</a>
+    <a href="value100.html" data-ticker="980081">价值100</a>
+    <a href="fcf.html" data-ticker="980092">自由现金流</a>
+    <a href="dividend.html" data-ticker="000922">中证红利</a>
+    <a href="soe-dividend.html" data-ticker="000825">央企红利</a>
+    <a href="tech100.html" data-ticker="931187">科技100</a>
+    <a href="chinext.html" data-ticker="399006">创业板指</a>
+    <a href="star.html" data-ticker="000688">科创50</a>
+    <span class="etf-nav-note">七个指数 · 沪深300 为基准</span>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-line"></span><span id="heroEyebrow"></span></div>
+          <h1 id="heroTitle"></h1>
+          <p class="hero-lede" id="heroLede"></p>
+          <div class="hero-price">
+            <span class="cur">¥</span><b id="heroPrice">—</b><span id="heroChange" class="change-chip">—</span>
+          </div>
+          <div class="hero-meta" id="heroMeta"></div>
+          <div class="range-row">
+            <div class="range-label"><span>52 WEEK RANGE</span><b id="rangeText">—</b></div>
+            <div class="range-track"><span class="range-fill" id="rangeFill"></span><i id="rangeDot"></i></div>
+          </div>
+        </div>
+        <div class="card gauge-card">
+          <div class="gauge-head"><span class="micro">VALUATION TEMPERATURE</span><span class="regime" id="gaugeRegime">—</span></div>
+          <canvas id="gauge" width="360" height="230" aria-label="综合估值温度"></canvas>
+          <div class="gauge-score"><b id="gaugeScore">—</b><span>/ 100</span></div>
+          <p class="gauge-note" id="gaugeNote">—</p>
+          <div class="gauge-scale"><span>0 深度低估</span><span>50 适中</span><span>100 高估</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ticker-strip" aria-label="当前指标">
+      <div class="tick"><span>PE-TTM</span><b id="tickPe">—</b><em id="tickPePct">—</em></div>
+      <div class="tick"><span>PB</span><b id="tickPb">—</b><em id="tickPbPct">—</em></div>
+      <div class="tick"><span>DIVIDEND</span><b id="tickDy">—</b><em id="tickDyPct">—</em></div>
+      <div class="tick"><span>ERP / 10Y</span><b id="tickErp">—</b><em id="tickErpPct">—</em></div>
+      <div class="tick"><span>VS 沪深300</span><b id="tickVs300">—</b><em id="tickVsLabel">PE 折价</em></div>
+      <div class="tick tick-note"><span>MODEL</span><b>PE/PB 历史分位</b><em>详见方法</em></div>
+    </section>
+
+    <section class="section metrics-section">
+      <div class="metric-grid" id="metricCards"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">01 / DASHBOARD</span><h2>一眼看清，贵与便宜</h2></div>
+        <p>绝对数值告诉你“是多少”，历史分位告诉你“处在哪”。PE、PB、ERP 三等权，股息率单独看。</p>
+      </div>
+      <div class="overview-grid">
+        <div class="card compass-card reveal">
+          <div class="card-head"><div><span class="micro">VALUATION COMPASS</span><h3>估值罗盘</h3></div><span class="compass-hint">便宜 <i></i> 贵</span></div>
+          <div class="compass-list" id="compassList"></div>
+          <div class="compass-foot"><span>每行左侧为当前值，右侧为历史昂贵度</span><span id="compassFoot">—</span></div>
+        </div>
+        <div class="insight-stack" id="insightStack"></div>
+      </div>
+    </section>
+
+    <section id="price" class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">02 / PRICE</span><h2 id="priceHead">价格，是结果不是原因</h2></div>
+        <p id="priceSub">—</p>
+      </div>
+      <div class="card chart-card reveal">
+        <div class="chart-head">
+          <div class="chart-title"><span class="micro">PRICE INDEX</span><h3 id="priceTitle">收盘点位 <small>Price Index</small></h3></div>
+          <div class="chart-read"><b id="priceRead">—</b><span class="pill" id="pricePill">—</span></div>
+        </div>
+        <div class="line-legend"><span><i class="swatch gold"></i><span id="priceLegend">—</span></span><span>价格指数 · 不含股息</span></div>
+        <div class="chart-wrap chart-tall"><canvas id="priceChart"></canvas></div>
+        <div class="chart-foot"><span id="priceFoot">—</span><span>数据起点 <b id="dataStart">—</b></span></div>
+      </div>
+    </section>
+
+    <section id="valuation" class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">03 / VALUATION</span><h2 id="valHead">估值，历史的刻度</h2></div>
+        <p id="valSub">—</p>
+      </div>
+
+      <div class="card chart-card reveal">
+        <div class="chart-head">
+          <div class="chart-title"><span class="micro">TRAILING P/E</span><h3>PE-TTM <small>市盈率</small></h3></div>
+          <div class="chart-read"><b id="peRead">—</b><span class="pill" id="pePill">—</span></div>
+        </div>
+        <div class="range-tabs" id="rangeTabs">
+          <button data-range="1y">1年</button><button data-range="3y">3年</button><button data-range="5y">5年</button><button data-range="all" class="is-active">全部</button>
+        </div>
+        <div class="chart-wrap chart-tall"><canvas id="peChart"></canvas></div>
+        <div class="chart-foot"><span id="peFoot">—</span><span>虚线 = 中位数 · 背景 = 五档分位</span></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card chart-card reveal">
+          <div class="chart-head">
+            <div class="chart-title"><span class="micro">PRICE / BOOK</span><h3>PB <small>市净率</small></h3></div>
+            <div class="chart-read"><b id="pbRead">—</b><span class="pill" id="pbPill">—</span></div>
+          </div>
+          <div class="chart-wrap chart-mid"><canvas id="pbChart"></canvas></div>
+          <div class="chart-foot"><span id="pbFoot">—</span><span>背景 = 历史分位</span></div>
+        </div>
+        <div class="card chart-card reveal">
+          <div class="chart-head">
+            <div class="chart-title"><span class="micro">EQUITY RISK PREMIUM</span><h3>ERP <small>1/PE − 10Y</small></h3></div>
+            <div class="chart-read"><b id="erpRead">—</b><span class="pill" id="erpPill">—</span></div>
+          </div>
+          <div class="chart-wrap chart-mid"><canvas id="erpChart"></canvas></div>
+          <div class="chart-foot"><span id="erpFoot">—</span><span>10Y = <b id="ust10y">—</b></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="benchmark" class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">04 / VS CSI 300</span><h2>和沪深300比，位置不同</h2></div>
+        <p>沪深300是宽基参照系，不是估值锚。把它放在旁边，是为了看清折价背后承担了什么。</p>
+      </div>
+      <div class="card chart-card reveal">
+        <div class="chart-head">
+          <div class="chart-title"><span class="micro">RELATIVE PERFORMANCE</span><h3>相对表现 <small><span id="perfTicker">—</span> / 沪深300</small></h3></div>
+          <div class="chart-read"><b id="perfRead">—</b><span class="pill" id="perfPill">累计相对</span></div>
+        </div>
+        <div class="line-legend"><span><i class="swatch gold"></i><span id="perfLegend">—</span></span><span><i class="swatch blue"></i>沪深300</span><span>起点 = 100</span></div>
+        <div class="chart-wrap chart-tall"><canvas id="perfChart"></canvas></div>
+        <div class="chart-foot"><span id="perfFoot">—</span><span>价格指数 · 共同起点</span></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card chart-card reveal">
+          <div class="chart-head">
+            <div class="chart-title"><span class="micro">RELATIVE STRENGTH</span><h3>相对强弱 <small><span id="relTicker">—</span> / 沪深300</small></h3></div>
+            <div class="chart-read"><b id="relRead">—</b><span class="pill" id="relPill">—</span></div>
+          </div>
+          <div class="chart-wrap chart-mid"><canvas id="relChart"></canvas></div>
+          <div class="chart-foot"><span>起点 = 100，向上代表跑赢沪深300</span><span>虚线 = 100</span></div>
+        </div>
+        <div class="card compare-card reveal">
+          <div class="card-head"><div><span class="micro">SIDE BY SIDE</span><h3>同一时点的两个画面</h3></div><span class="micro">2026-11-13</span></div>
+          <div class="compare-list" id="compareList"></div>
+          <div class="chart-foot"><span id="compareFoot">—</span><span>PE / PB / 股息率 / ERP</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="income" class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">05 / INCOME</span><h2 id="incomeHead">股息，现金回报的刻度</h2></div>
+        <p id="incomeSub">—</p>
+      </div>
+      <div class="income-grid">
+        <div class="card income-card reveal">
+          <div class="chart-head"><div class="chart-title"><span class="micro">DIVIDEND YIELD</span><h3>当前股息率</h3></div><div class="chart-read"><b id="dyRead">—</b><span class="pill" id="dyPill">—</span></div></div>
+          <div class="yield-big"><b id="dyBig">—</b><span>%</span></div>
+          <div class="percentile-bar"><span class="pb-track"><i id="dyBar"></i></span><div class="pb-labels"><span>便宜</span><span>历史分位 <b id="dyPctText">—</b></span><span>贵</span></div></div>
+          <p class="income-note" id="dyNote">—</p>
+        </div>
+        <div class="card income-card reveal">
+          <div class="chart-head"><div class="chart-title"><span class="micro">VS CSI 300</span><h3>股息率对照</h3></div><div class="chart-read"><b id="dySpread">—</b><span class="pill tone-teal">利差</span></div></div>
+          <div class="yield-compare">
+            <div><span id="dySelfLabel">—</span><b id="dySelf">—</b><i style="--w:0%"></i></div>
+            <div><span>沪深300</span><b id="dyBench">—</b><i id="dyBenchBar"></i></div>
+          </div>
+          <div class="risk-strip" id="incomeStats"></div>
+          <div class="chart-foot"><span>股息率越高，现金回报越厚；但不等于总回报更高。</span><span>当前值</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="seasonality" class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">06 / SEASONALITY</span><h2>季节性，是习惯还是噪音</h2></div>
+        <p>按日历月统计价格指数回报。样本越长越有参考价值；短样本只说明“发生过”，不说明“会重复”。</p>
+      </div>
+      <div class="card chart-card reveal">
+        <div class="chart-head">
+          <div class="chart-title"><span class="micro">CALENDAR-MONTH RETURN</span><h3>月度季节性 <small>Price Return</small></h3></div>
+          <div class="chart-read"><b id="seasonRead">—</b><span class="pill" id="seasonPill">—</span></div>
+        </div>
+        <div class="chart-wrap chart-season"><div class="season-bars" id="seasonBars"></div></div>
+        <div class="season-strip" id="seasonStrip"></div>
+        <div class="chart-foot"><span id="seasonFoot">—</span><span>完整月份 · 价格指数</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head reveal">
+        <div><span class="kicker">07 / TRACK RECORD</span><h2>月度估值日志</h2></div>
+        <p>历史分位是时点概念；把每个月末的估值留档，长期看位置如何移动。</p>
+      </div>
+      <div class="card log-card reveal">
+        <div class="card-head"><div><span class="micro">MONTHLY SNAPSHOT</span><h3>最近 12 个月</h3></div><a class="text-link" id="csvLink" href="#">下载 CSV ↗</a></div>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>月份</th><th>PE-TTM</th><th>PB</th><th>ERP</th><th>综合分位</th><th>状态</th></tr></thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+        <div class="chart-foot"><span id="logFoot">—</span><span>综合分位 = PE / PB / ERP 三等权</span></div>
+      </div>
+    </section>
+
+    <section class="section methodology">
+      <div class="section-head reveal">
+        <div><span class="kicker">08 / METHODOLOGY</span><h2>数据、公式与边界</h2></div>
+        <p>所有指标都给出可复核的口径；没有统一的公开历史，就不伪造。</p>
+      </div>
+      <div class="method-grid">
+        <div class="card method-card">
+          <div class="card-head"><div><span class="micro">DATA</span><h3>数据来源</h3></div></div>
+          <div class="source-list" id="sourceList"></div>
+          <div class="method-note"><p><b>PE-TTM / PB</b><br>来自韭圈儿指数估值历史（Wind 口径）；当前 PE/PB/股息率与分位来自韭圈儿估值表。</p><p><b>股息率</b><br>6 个指数为当前值与历史分位；国证价值100 / 自由现金流由全收益指数与价格指数比推导 12 个月股息率。</p></div>
+        </div>
+        <div class="card method-card">
+          <div class="card-head"><div><span class="micro">FORMULA</span><h3>公式与口径</h3></div></div>
+          <dl class="formula-list">
+            <div><dt>PE-TTM</dt><dd><code>指数点位 ÷ 组合 TTM 盈利</code><p>当前值与历史分位均采用同一数据源；不做二次拟合。</p></div>
+            <div><dt>PB</dt><dd><code>指数点位 ÷ 组合净资产</code><p>PB 与 PE 同时看，避免行业结构导致的单一指标偏差。</p></div>
+            <div><dt>股息率</dt><dd><code>近 12 个月现金分红 ÷ 点位</code><p>6 个指数用当前值；国证两只由全收益/价格比推导。</p></div>
+            <div><dt>风险溢价 ERP</dt><dd><code>1 / PE − 中国 10Y 国债</code><p>盈利收益率减去无风险利率；越高代表股票相对债券越便宜。</p></div>
+            <div><dt>综合分位</dt><dd><code>PE分位 + PB分位 + (100 − ERP分位)</code><p>三项等权；股息率不进入综合分位，因为历史序列不统一。</p></div>
+            <div><dt>季节性</dt><dd><code>日历月价格回报</code><p>只用完整月份；不含股息，短样本明确标注。</p></div>
+          </dl>
+        </div>
+      </div>
+      <div class="model-warning"><span class="warn-icon">!</span><p><b>边界</b><br>历史分位不代表未来回归；价格指数不含股息；部分指数估值历史较短。数据只用于研究，不构成投资建议。</p></div>
+      <p class="audit-note" id="auditNote">—</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-left"><span class="brand-mark small">C</span><span><b>CHINA INDEX LAB</b><small>Valuation, with context.</small></span></div>
+    <div class="footer-right"><span id="footerTicker">—</span><span>© 2026 CHINA INDEX LAB</span></div>
+  </footer>
+
+  <script src="{{DATA_SCRIPT}}"></script>
+  <script src="assets/chart.umd.min.js"></script>
+  <script>window.PAGE_CONFIG = {{PAGE_CONFIG}};</script>
+  <script src="app.js"></script>
+</body>
+</html>
