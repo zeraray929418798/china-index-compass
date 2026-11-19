@@ -24,6 +24,8 @@
   const charts = {};
   let allLabels = [];
   let perfData = [];
+  let view = { start: 0, end: 0 };
+  let drag = null;
 
   const PALETTE = {
     value: "#e3b46a", fcf: "#54b78b", dividend: "#d99a6c", soe: "#e06767",
@@ -346,25 +348,76 @@
     });
   }
 
-  function applyRange() {
-    const active = document.querySelector("#rangeTabs button.is-active")?.dataset.range || "all";
-    const end = new Date(allLabels[allLabels.length - 1]).getTime();
-    const years = active === "1y" ? 1 : active === "3y" ? 3 : active === "5y" ? 5 : 0;
-    const cutoff = active === "all" ? -Infinity : end - years * 365.25 * 86400000;
-    const idxs = active === "all"
-      ? allLabels.map((_, i) => i)
-      : allLabels.map((d, i) => ({ d, i })).filter((x) => new Date(x.d).getTime() >= cutoff).map((x) => x.i);
-    const keep = new Set(idxs.map((i) => allLabels[i]));
+  function applyView(start, end) {
+    const last = allLabels.length - 1;
+    start = Math.max(0, Math.min(start, last - 2));
+    end = Math.max(start + 2, Math.min(end, last));
+    view = { start, end };
+    const idxs = [];
+    for (let i = start; i <= end; i++) idxs.push(i);
     const slice = (arr) => idxs.map((i) => arr[i]);
+    const first = allLabels[start], lastDate = allLabels[end];
     charts.price.data.labels = slice(allLabels); charts.price.data.datasets[0].data = slice(D.series.map((r) => r.c));
     charts.pe.data.labels = slice(allLabels); charts.pe.data.datasets[0].data = slice(D.series.map((r) => r.pe));
     charts.pb.data.labels = slice(allLabels); charts.pb.data.datasets[0].data = slice(D.series.map((r) => r.pb));
     charts.erp.data.labels = slice(allLabels); charts.erp.data.datasets[0].data = slice(D.series.map((r) => r.erp));
     charts.rel.data.labels = slice(allLabels); charts.rel.data.datasets[0].data = slice(D.series.map((r) => r.rel));
-    charts.perf.data.labels = perfData.filter((r) => keep.has(r.d)).map((r) => r.d);
-    charts.perf.data.datasets[0].data = perfData.filter((r) => keep.has(r.d)).map((r) => r.self);
-    charts.perf.data.datasets[1].data = perfData.filter((r) => keep.has(r.d)).map((r) => r.bench);
+    const perfRows = perfData.filter((r) => r.d >= first && r.d <= lastDate);
+    charts.perf.data.labels = perfRows.map((r) => r.d);
+    charts.perf.data.datasets[0].data = perfRows.map((r) => r.self);
+    charts.perf.data.datasets[1].data = perfRows.map((r) => r.bench);
     Object.values(charts).forEach((c) => c.update("none"));
+  }
+
+  function clearRangeActive() {
+    document.querySelectorAll("#rangeTabs button").forEach((b) => b.classList.remove("is-active"));
+  }
+
+  function setPreset(range) {
+    const endTs = new Date(allLabels[allLabels.length - 1]).getTime();
+    const years = range === "1y" ? 1 : range === "3y" ? 3 : range === "5y" ? 5 : 0;
+    let start = 0;
+    if (range !== "all") {
+      const cutoff = endTs - years * 365.25 * 86400000;
+      const found = allLabels.findIndex((d) => new Date(d).getTime() >= cutoff);
+      start = found < 0 ? 0 : found;
+    }
+    applyView(start, allLabels.length - 1);
+  }
+
+  function attachZoom(canvas) {
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const span = view.end - view.start;
+      const rect = canvas.getBoundingClientRect();
+      const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const nextSpan = Math.max(20, Math.min(allLabels.length - 1, Math.round(span * (e.deltaY > 0 ? 1.22 : 0.82))));
+      const anchor = view.start + span * frac;
+      let start = Math.round(anchor - nextSpan * frac);
+      start = Math.max(0, Math.min(start, allLabels.length - 1 - nextSpan));
+      applyView(start, start + nextSpan);
+      clearRangeActive();
+    }, { passive: false });
+
+    canvas.addEventListener("pointerdown", (e) => {
+      drag = { x: e.clientX, start: view.start, end: view.end };
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const span = drag.end - drag.start;
+      const rect = canvas.getBoundingClientRect();
+      const shift = Math.round((e.clientX - drag.x) / rect.width * span);
+      applyView(drag.start - shift, drag.end - shift);
+      clearRangeActive();
+    });
+    canvas.addEventListener("pointerup", () => { drag = null; });
+    canvas.addEventListener("pointercancel", () => { drag = null; });
+    canvas.addEventListener("dblclick", () => {
+      applyView(0, allLabels.length - 1);
+      clearRangeActive();
+      document.querySelector('#rangeTabs button[data-range="all"]')?.classList.add("is-active");
+    });
   }
 
   /* ---------------- price / valuation copies ---------------- */
@@ -490,12 +543,13 @@
     renderLog();
     renderSources();
     buildCharts();
-    applyRange();
+    applyView(0, allLabels.length - 1);
+    [charts.price, charts.pe, charts.pb, charts.erp, charts.perf, charts.rel].forEach((c) => attachZoom(c.canvas));
     document.querySelectorAll("#rangeTabs button").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll("#rangeTabs button").forEach((b) => b.classList.remove("is-active"));
         btn.classList.add("is-active");
-        applyRange();
+        setPreset(btn.dataset.range);
       });
     });
     window.addEventListener("resize", () => drawGauge(D.current.composite));

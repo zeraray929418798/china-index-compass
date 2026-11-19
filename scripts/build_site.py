@@ -57,6 +57,9 @@ def load_index(code: str) -> pd.DataFrame:
     df["pb"] = pd.to_numeric(df["pb"], errors="coerce")
     df.loc[(df["pe"] <= 0) | (df["pe"] > 1000), "pe"] = np.nan
     df.loc[(df["pb"] <= 0) | (df["pb"] > 100), "pb"] = np.nan
+    if code == "000688":
+        # The upstream series contains back-filled history before the index base date.
+        df = df[df.index >= pd.Timestamp("2019-12-31")]
     return df
 
 

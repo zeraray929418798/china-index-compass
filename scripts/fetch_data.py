@@ -30,7 +30,7 @@ CODES = {
 TARGETS = set(CODES)
 
 
-def jq_index(code: str, start: str = "2016-01-01", end: str | None = None) -> pd.DataFrame:
+def jq_index(code: str, start: str = "2005-01-01", end: str | None = None) -> pd.DataFrame:
     end = end or datetime.now().date().isoformat()
     body = {"code": code, "start_time": start, "end_time": end}
     req = urllib.request.Request(
