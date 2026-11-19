@@ -62,16 +62,14 @@
     </tr>`).join("");
 })();
 
-/* ---------------- ratio YoY + weekly MACD ---------------- */
+/* ---------------- ratio YoY + percentile zones ---------------- */
 (() => {
   const H = window.HUB_DATA;
   const R = H && H.ratio;
   if (!R || !window.Chart) return;
   const $ = (id) => document.getElementById(id);
-  const COLORS = { teal: "#55c7b2", blue: "#6aa7ef", gold: "#e3b46a", red: "#e06767", green: "#54b78b", dim: "#6f7d8d", grid: "rgba(255,255,255,.055)" };
-  const fmtDate = (v) => new Date(v).toISOString().slice(0, 10);
+  const COLORS = { teal: "#55c7b2", gold: "#e3b46a", dim: "#6f7d8d", grid: "rgba(255,255,255,.055)" };
   const topPoints = R.series.map((r) => ({ x: Date.parse(r.d), y: r.y }));
-  const macd = R.macd.map((r) => ({ x: Date.parse(r.d), dif: r.dif, dea: r.dea, hist: r.hist }));
   const fullMin = topPoints[0].x, fullMax = topPoints[topPoints.length - 1].x;
   const MIN_SPAN = 180 * 86400000;
   const state = { min: fullMin, max: fullMax, drag: null };
@@ -80,35 +78,56 @@
   Chart.defaults.color = COLORS.dim;
   Chart.defaults.borderColor = COLORS.grid;
 
-  const bandPlugin = {
-    id: "ratioBand",
+  const zonePlugin = {
+    id: "ratioZones",
     beforeDatasetsDraw(chart, args, opts) {
       if (opts?.p20 == null || opts?.p80 == null || !chart.chartArea) return;
       const y = chart.scales.y;
       const area = chart.chartArea;
-      const top = y.getPixelForValue(opts.p80);
-      const bottom = y.getPixelForValue(opts.p20);
-      if (!Number.isFinite(top) || !Number.isFinite(bottom)) return;
-      chart.ctx.fillStyle = "rgba(85,199,178,.075)";
-      chart.ctx.fillRect(area.left, Math.min(top, bottom), area.right - area.left, Math.abs(bottom - top));
+      const p20 = y.getPixelForValue(opts.p20);
+      const p80 = y.getPixelForValue(opts.p80);
+      if (!Number.isFinite(p20) || !Number.isFinite(p80)) return;
+      const ctx = chart.ctx;
+      // opportunity below p20, fair between, danger above p80
+      ctx.fillStyle = "rgba(84,183,139,.10)";
+      ctx.fillRect(area.left, Math.max(area.top, p20), area.right - area.left, area.bottom - Math.max(area.top, p20));
+      ctx.fillStyle = "rgba(216,193,107,.045)";
+      ctx.fillRect(area.left, p80, area.right - area.left, p20 - p80);
+      ctx.fillStyle = "rgba(224,103,103,.10)";
+      ctx.fillRect(area.left, area.top, area.right - area.left, Math.max(0, p80 - area.top));
     },
     afterDatasetsDraw(chart, args, opts) {
-      if (opts?.mean == null || !chart.chartArea) return;
-      const y = chart.scales.y.getPixelForValue(opts.mean);
+      if (!chart.chartArea) return;
+      const y = chart.scales.y;
       const area = chart.chartArea;
-      if (!Number.isFinite(y) || y < area.top || y > area.bottom) return;
-      chart.ctx.save();
-      chart.ctx.setLineDash([5, 5]);
-      chart.ctx.strokeStyle = "rgba(227,180,106,.85)";
-      chart.ctx.lineWidth = 1.3;
-      chart.ctx.beginPath(); chart.ctx.moveTo(area.left, y); chart.ctx.lineTo(area.right, y); chart.ctx.stroke();
-      chart.ctx.fillStyle = "rgba(227,180,106,.85)";
-      chart.ctx.font = "9px 'Bahnschrift','Segoe UI',sans-serif";
-      chart.ctx.fillText(`均值 ${opts.mean.toFixed(1)}%`, area.left + 6, Math.max(area.top + 10, y - 5));
-      chart.ctx.restore();
+      const ctx = chart.ctx;
+      const p20 = y.getPixelForValue(opts.p20);
+      const p80 = y.getPixelForValue(opts.p80);
+      const mean = y.getPixelForValue(opts.mean);
+      // zone labels
+      ctx.save();
+      ctx.font = "9px 'Inter','Noto Sans SC','Segoe UI',sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillStyle = "rgba(142,215,180,.55)";
+      ctx.fillText("机会区", area.right - 7, Math.min(area.bottom - 6, p20 - 5));
+      ctx.fillStyle = "rgba(216,193,107,.55)";
+      ctx.fillText("适中区", area.right - 7, (p20 + p80) / 2);
+      ctx.fillStyle = "rgba(243,165,165,.55)";
+      ctx.fillText("危险区", area.right - 7, Math.max(area.top + 12, p80 + 13));
+      if (Number.isFinite(mean) && mean >= area.top && mean <= area.bottom) {
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = "rgba(227,180,106,.8)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(area.left, mean); ctx.lineTo(area.right, mean); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.textAlign = "left";
+        ctx.fillStyle = "rgba(227,180,106,.8)";
+        ctx.fillText(`均值 ${opts.mean.toFixed(1)}%`, area.left + 7, Math.max(area.top + 10, mean - 5));
+      }
+      ctx.restore();
     },
   };
-  Chart.register(bandPlugin);
+  Chart.register(zonePlugin);
 
   const xTicks = {
     color: COLORS.dim, maxTicksLimit: 8, maxRotation: 0, autoSkip: true,
@@ -124,28 +143,30 @@
     grid: { color: COLORS.grid, drawTicks: false }, border: { display: false },
     ticks: xTicks,
   });
-  const baseTooltip = (formatter) => ({
-    backgroundColor: "rgba(8,13,19,.96)", borderColor: "rgba(255,255,255,.12)", borderWidth: 1,
-    padding: 10, displayColors: false, titleColor: "#e9eef5", bodyColor: "#a7b5c5",
-    titleFont: { size: 10, weight: "600" }, bodyFont: { size: 10 },
-    callbacks: { title: (items) => (items.length ? fmtDate(items[0].parsed.x) : ""), label: formatter },
-  });
 
   const ratioChart = new Chart($("ratioChart"), {
     type: "line",
     data: { datasets: [{
       label: "比值同比", data: topPoints, borderColor: COLORS.teal,
-      backgroundColor: "rgba(85,199,178,.08)", borderWidth: 1.8, pointRadius: 0,
-      pointHitRadius: 8, tension: .16, fill: true,
+      backgroundColor: "rgba(85,199,178,.06)", borderWidth: 1.8, pointRadius: 0,
+      pointHitRadius: 8, tension: .16, fill: false,
     }] },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       interaction: { mode: "nearest", intersect: false },
-      layout: { padding: { top: 8, right: 6, left: 0, bottom: 0 } },
+      layout: { padding: { top: 8, right: 10, left: 0, bottom: 0 } },
       plugins: {
         legend: { display: false },
-        ratioBand: { p20: R.p20, p80: R.p80, mean: R.mean },
-        tooltip: baseTooltip((ctx) => `  同比  ${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(2)}%`),
+        ratioZones: { p20: R.p20, p80: R.p80, mean: R.mean },
+        tooltip: {
+          backgroundColor: "rgba(8,13,19,.96)", borderColor: "rgba(255,255,255,.12)", borderWidth: 1,
+          padding: 10, displayColors: false, titleColor: "#e9eef5", bodyColor: "#a7b5c5",
+          titleFont: { size: 10, weight: "600" }, bodyFont: { size: 10 },
+          callbacks: {
+            title: (items) => (items.length ? new Date(items[0].parsed.x).toISOString().slice(0, 10) : ""),
+            label: (ctx) => `  同比  ${ctx.parsed.y >= 0 ? "+" : ""}${ctx.parsed.y.toFixed(2)}%`,
+          },
+        },
       },
       scales: {
         x: xScale(),
@@ -155,34 +176,10 @@
     },
   });
 
-  const macdChart = new Chart($("macdChart"), {
-    data: {
-      datasets: [
-        { type: "bar", label: "HIST", data: macd.map((r) => ({ x: r.x, y: r.hist })), backgroundColor: macd.map((r) => r.hist >= 0 ? "rgba(224,103,103,.48)" : "rgba(84,183,139,.48)"), borderWidth: 0, barPercentage: .72 },
-        { type: "line", label: "DIF", data: macd.map((r) => ({ x: r.x, y: r.dif })), borderColor: COLORS.gold, borderWidth: 1.4, pointRadius: 0, tension: .15 },
-        { type: "line", label: "DEA", data: macd.map((r) => ({ x: r.x, y: r.dea })), borderColor: COLORS.blue, borderWidth: 1.4, pointRadius: 0, tension: .15 },
-      ],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: false,
-      interaction: { mode: "nearest", intersect: false },
-      layout: { padding: { top: 0, right: 6, left: 0, bottom: 0 } },
-      plugins: { legend: { display: false }, tooltip: baseTooltip((ctx) => `  ${ctx.dataset.label}  ${Number(ctx.parsed.y).toFixed(3)}`) },
-      scales: {
-        x: xScale(),
-        y: { position: "right", grid: { color: COLORS.grid, drawTicks: false }, border: { display: false },
-          ticks: { color: COLORS.dim, padding: 6, maxTicksLimit: 4, font: { size: 9 }, callback: (v) => Number(v).toFixed(1) } },
-      },
-    },
-  });
-
   function applyRange() {
     ratioChart.options.scales.x.min = state.min;
     ratioChart.options.scales.x.max = state.max;
-    macdChart.options.scales.x.min = state.min;
-    macdChart.options.scales.x.max = state.max;
     ratioChart.update("none");
-    macdChart.update("none");
   }
 
   function clampRange(min, max) {
@@ -202,38 +199,31 @@
     applyRange();
   }
 
-  function attach(canvas) {
-    canvas.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      zoomAt(e, e.deltaY > 0 ? 1.22 : .82);
-    }, { passive: false });
-    canvas.addEventListener("pointerdown", (e) => {
-      state.drag = { x: e.clientX, min: state.min, max: state.max };
-      canvas.setPointerCapture(e.pointerId);
-    });
-    canvas.addEventListener("pointermove", (e) => {
-      if (!state.drag) return;
-      const rect = canvas.getBoundingClientRect();
-      const dx = (e.clientX - state.drag.x) / rect.width * (state.drag.max - state.drag.min);
-      const next = clampRange(state.drag.min - dx, state.drag.max - dx);
-      state.min = next.min; state.max = next.max;
-      applyRange();
-    });
-    canvas.addEventListener("pointerup", () => { state.drag = null; });
-    canvas.addEventListener("pointercancel", () => { state.drag = null; });
-    canvas.addEventListener("dblclick", () => {
-      state.min = fullMin; state.max = fullMax; applyRange();
-    });
-  }
-  attach(ratioChart.canvas);
-  attach(macdChart.canvas);
+  ratioChart.canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    zoomAt(e, e.deltaY > 0 ? 1.22 : .82);
+  }, { passive: false });
+  ratioChart.canvas.addEventListener("pointerdown", (e) => {
+    state.drag = { x: e.clientX, min: state.min, max: state.max };
+    ratioChart.canvas.setPointerCapture(e.pointerId);
+  });
+  ratioChart.canvas.addEventListener("pointermove", (e) => {
+    if (!state.drag) return;
+    const rect = ratioChart.canvas.getBoundingClientRect();
+    const dx = (e.clientX - state.drag.x) / rect.width * (state.drag.max - state.drag.min);
+    const next = clampRange(state.drag.min - dx, state.drag.max - dx);
+    state.min = next.min; state.max = next.max;
+    applyRange();
+  });
+  ratioChart.canvas.addEventListener("pointerup", () => { state.drag = null; });
+  ratioChart.canvas.addEventListener("pointercancel", () => { state.drag = null; });
+  ratioChart.canvas.addEventListener("dblclick", () => {
+    state.min = fullMin; state.max = fullMax; applyRange();
+  });
 
-  const last = R.macd[R.macd.length - 1] || { dif: 0, dea: 0, hist: 0 };
+  const zone = R.pct <= 20 ? "机会区" : R.pct >= 80 ? "危险区" : "适中区";
   $("ratioRead").textContent = `${R.current_yoy >= 0 ? "+" : ""}${R.current_yoy.toFixed(1)}%`;
-  $("ratioPill").textContent = `比值 ${R.current_ratio.toFixed(3)}`;
-  $("ratioRangeText").textContent = `20–80 分位 ${R.p20.toFixed(1)}% / ${R.p80.toFixed(1)}% · 均值 ${R.mean.toFixed(1)}%`;
-  $("ratioFoot").textContent = `创业板指 / 中证红利 · 当前比值 ${R.current_ratio.toFixed(3)} · 同比 ${R.current_yoy >= 0 ? "+" : ""}${R.current_yoy.toFixed(2)}% · 数据截至 ${R.as_of}`;
-  $("macdDif").textContent = last.dif.toFixed(3);
-  $("macdDea").textContent = last.dea.toFixed(3);
-  $("macdHist").textContent = last.hist.toFixed(3);
+  $("ratioPill").textContent = `${R.pct.toFixed(0)}% 分位 · ${zone}`;
+  $("ratioRangeText").textContent = `机会 ≤ ${R.p20.toFixed(1)}% · 危险 ≥ ${R.p80.toFixed(1)}% · 均值 ${R.mean.toFixed(1)}%`;
+  $("ratioFoot").textContent = `创业板指 / 中证红利 · 当前比值 ${R.current_ratio.toFixed(3)} · 同比 ${R.current_yoy >= 0 ? "+" : ""}${R.current_yoy.toFixed(2)}% · ${R.pct.toFixed(1)}% 分位 · 数据截至 ${R.as_of}`;
 })();

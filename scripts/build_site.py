@@ -73,25 +73,20 @@ def derive_dy(code: str, price: pd.DataFrame) -> pd.Series:
 
 
 def build_ratio() -> dict:
-    """ChiNext / SOE Dividend ratio, its YoY curve and weekly MACD."""
+    """ChiNext / CSI Dividend ratio, its YoY curve and percentile zones."""
     chinext = load_index("399006")["close"]
     dividend = load_index("000922")["close"]
     pair = pd.concat([chinext.rename("chinext"), dividend.rename("dividend")], axis=1).dropna()
     ratio = pair["chinext"] / pair["dividend"]
     yoy = (ratio / ratio.shift(252) - 1.0) * 100.0
     yoy = yoy.replace([np.inf, -np.inf], np.nan).dropna()
-    weekly = yoy.resample("W-FRI").last().dropna()
-    if len(weekly) and weekly.index[-1] > yoy.index[-1]:
-        weekly.index = weekly.index[:-1].append(pd.DatetimeIndex([yoy.index[-1]]))
-    ema12 = weekly.ewm(span=12, adjust=False).mean()
-    ema26 = weekly.ewm(span=26, adjust=False).mean()
-    dif = ema12 - ema26
-    dea = dif.ewm(span=9, adjust=False).mean()
-    hist = 2.0 * (dif - dea)
+    current = float(yoy.iloc[-1])
+    pct = float((yoy <= current).mean() * 100.0)
     return {
         "as_of": pair.index[-1].strftime("%Y-%m-%d"),
         "current_ratio": round(float(ratio.iloc[-1]), 4),
-        "current_yoy": round(float(yoy.iloc[-1]), 2),
+        "current_yoy": round(current, 2),
+        "pct": round(pct, 1),
         "mean": round(float(yoy.mean()), 2),
         "p20": round(float(yoy.quantile(.2)), 2),
         "p80": round(float(yoy.quantile(.8)), 2),
@@ -100,15 +95,6 @@ def build_ratio() -> dict:
         "series": [
             {"d": dt.strftime("%Y-%m-%d"), "y": round(float(v), 2)}
             for dt, v in yoy.items()
-        ],
-        "macd": [
-            {
-                "d": dt.strftime("%Y-%m-%d"),
-                "dif": round(float(dif.loc[dt]), 3),
-                "dea": round(float(dea.loc[dt]), 3),
-                "hist": round(float(hist.loc[dt]), 3),
-            }
-            for dt in weekly.index
         ],
     }
 
