@@ -72,6 +72,46 @@ def derive_dy(code: str, price: pd.DataFrame) -> pd.Series:
     return dy
 
 
+def build_ratio() -> dict:
+    """ChiNext / SOE Dividend ratio, its YoY curve and weekly MACD."""
+    chinext = load_index("399006")["close"]
+    soe = load_index("000825")["close"]
+    pair = pd.concat([chinext.rename("chinext"), soe.rename("soe")], axis=1).dropna()
+    ratio = pair["chinext"] / pair["soe"]
+    yoy = (ratio / ratio.shift(252) - 1.0) * 100.0
+    yoy = yoy.replace([np.inf, -np.inf], np.nan).dropna()
+    weekly = ratio.resample("W-FRI").last().dropna()
+    weekly = weekly[weekly.index <= ratio.index[-1]]
+    ema12 = weekly.ewm(span=12, adjust=False).mean()
+    ema26 = weekly.ewm(span=26, adjust=False).mean()
+    dif = ema12 - ema26
+    dea = dif.ewm(span=9, adjust=False).mean()
+    hist = 2.0 * (dif - dea)
+    return {
+        "as_of": pair.index[-1].strftime("%Y-%m-%d"),
+        "current_ratio": round(float(ratio.iloc[-1]), 4),
+        "current_yoy": round(float(yoy.iloc[-1]), 2),
+        "mean": round(float(yoy.mean()), 2),
+        "p20": round(float(yoy.quantile(.2)), 2),
+        "p80": round(float(yoy.quantile(.8)), 2),
+        "min": round(float(yoy.min()), 2),
+        "max": round(float(yoy.max()), 2),
+        "series": [
+            {"d": dt.strftime("%Y-%m-%d"), "y": round(float(v), 2)}
+            for dt, v in yoy.items()
+        ],
+        "macd": [
+            {
+                "d": dt.strftime("%Y-%m-%d"),
+                "dif": round(float(dif.loc[dt]), 3),
+                "dea": round(float(dea.loc[dt]), 3),
+                "hist": round(float(hist.loc[dt]), 3),
+            }
+            for dt in weekly.index
+        ],
+    }
+
+
 def monthly_seasonality(close: pd.Series) -> dict:
     monthly = close.resample("ME").last().dropna()
     as_of = close.index[-1]
@@ -359,6 +399,7 @@ def main() -> int:
     hub = {
         "as_of": bench.index[-1].strftime("%Y-%m-%d"),
         "generated_at": GENERATED,
+        "ratio": build_ratio(),
         "benchmark": {
             **BENCH_CURRENT,
             "erp": BENCH_ERP,

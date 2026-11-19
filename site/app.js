@@ -51,6 +51,7 @@
     document.querySelector(`.etf-nav a[data-ticker="${CFG.ticker}"]`)?.classList.add("is-active");
     $("footerTicker").textContent = `${D.meta.short} · ${D.meta.code}`;
     $("dataStart").textContent = D.meta.data_start;
+    $("compareDate").textContent = D.meta.as_of;
     $("csvLink").href = CFG.csv || "#";
     document.documentElement.style.setProperty("--chart-accent", accent);
   }

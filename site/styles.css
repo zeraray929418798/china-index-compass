@@ -1069,3 +1069,22 @@ body[data-theme="benchmark"] { --gold: #8b9bb0; --gold-soft: #cdd6e2; }
 .pill.tone-red { color: #f3a5a5; border-color: rgba(224,103,103,.22); background: rgba(224,103,103,.08); }
 .pill.tone-green { color: #8ed7b4; border-color: rgba(84,183,139,.22); background: rgba(84,183,139,.08); }
 .pill.tone-blue { color: #a7c9f4; border-color: rgba(106,167,239,.22); background: rgba(106,167,239,.08); }
+
+/* ratio YoY + weekly MACD */
+.ratio-section { margin-top: 62px; }
+.ratio-card { padding: 22px 24px 16px; }
+.ratio-chart { height: 320px; margin-top: 3px; }
+.macd-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 8px; padding: 10px 2px 4px; border-top: 1px solid var(--line); color: var(--dim); font-size: 8.5px; letter-spacing: .06em; }
+.macd-head span:last-child { color: var(--muted); font-family: var(--num); font-size: 9px; letter-spacing: 0; }
+.macd-head b { color: var(--text); font-weight: 500; }
+.macd-chart { height: 150px; }
+.swatch.band { height: 8px; width: 12px; border-radius: 2px; background: rgba(85,199,178,.22); border: 1px solid rgba(85,199,178,.28); }
+.swatch.dim { background: transparent; border-top: 1px dashed rgba(255,255,255,.4); height: 1px; }
+.ratio-card .line-legend { margin-bottom: 2px; }
+.ratio-card .line-legend span:last-child { margin-left: auto; color: var(--dim); font-family: var(--num); }
+.ratio-card .chart-foot { margin-top: 8px; }
+@media (max-width: 700px) {
+  .ratio-chart { height: 260px; }
+  .macd-chart { height: 130px; }
+  .ratio-card .line-legend span:last-child { margin-left: 0; width: 100%; }
+}

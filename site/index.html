@@ -61,6 +61,29 @@
       </div>
     </section>
 
+    <section class="section ratio-section" id="ratio">
+      <div class="section-head reveal">
+        <div><span class="kicker">RATIO / SIGNAL</span><h2>创业板指 / 央企红利</h2></div>
+        <p>比值的 12 个月同比变化，配合比值周线 MACD。滚轮缩放、拖拽平移、双击复位；虚线为历史均值，阴影为 20–80 分位区间。</p>
+      </div>
+      <div class="card chart-card ratio-card reveal">
+        <div class="chart-head">
+          <div class="chart-title"><span class="micro">RATIO YOY + WEEKLY MACD</span><h3>比值同比 <small>399006 / 000825</small></h3></div>
+          <div class="chart-read"><b id="ratioRead">—</b><span class="pill tone-teal" id="ratioPill">同比</span></div>
+        </div>
+        <div class="line-legend">
+          <span><i class="swatch teal"></i>比值同比</span>
+          <span><i class="swatch dim"></i>历史均值</span>
+          <span><i class="swatch band"></i>20–80 分位</span>
+          <span id="ratioRangeText">—</span>
+        </div>
+        <div class="chart-wrap ratio-chart"><canvas id="ratioChart"></canvas></div>
+        <div class="macd-head"><span>MACD · 周线</span><span>DIF <b id="macdDif">—</b> · DEA <b id="macdDea">—</b> · HIST <b id="macdHist">—</b></span></div>
+        <div class="chart-wrap macd-chart"><canvas id="macdChart"></canvas></div>
+        <div class="chart-foot"><span id="ratioFoot">—</span><span>滚轮缩放 · 拖拽平移 · 双击复位</span></div>
+      </div>
+    </section>
+
     <section class="section">
       <div class="section-head reveal">
         <div><span class="kicker">HOW TO READ</span><h2>先看自己的历史，再看沪深300</h2></div>
@@ -68,7 +91,7 @@
       </div>
       <div class="disclaimer">
         <p>本页面由公开数据构建，仅用于研究与教育，不构成任何证券、基金或投资策略的推荐。历史分位不代表未来回归，价格指数不含股息。</p>
-        <p>CHINA INDEX LAB · 页面生成 <b id="hubGenerated">—</b> · 当前 PE/PB/股息率来源：韭圈儿 · 2026-11-13</p>
+        <p>CHINA INDEX LAB · 页面生成 <b id="hubGenerated">—</b> · 当前 PE/PB/股息率来源：韭圈儿 · <b id="hubDataDate">—</b></p>
       </div>
     </section>
   </main>
@@ -78,6 +101,7 @@
     <div class="footer-right"><span>价值100 · 自由现金流 · 中证红利 · 央企红利 · 科技100 · 创业板指 · 科创50</span><span>© 2026 CHINA INDEX LAB</span></div>
   </footer>
 
+  <script src="assets/chart.umd.min.js"></script>
   <script src="data/hub.js"></script>
   <script src="hub.js"></script>
 </body>
