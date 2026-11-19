@@ -232,7 +232,7 @@
   $("ratioRead").textContent = `${R.current_yoy >= 0 ? "+" : ""}${R.current_yoy.toFixed(1)}%`;
   $("ratioPill").textContent = `比值 ${R.current_ratio.toFixed(3)}`;
   $("ratioRangeText").textContent = `20–80 分位 ${R.p20.toFixed(1)}% / ${R.p80.toFixed(1)}% · 均值 ${R.mean.toFixed(1)}%`;
-  $("ratioFoot").textContent = `创业板指 / 央企红利 · 当前比值 ${R.current_ratio.toFixed(3)} · 同比 ${R.current_yoy >= 0 ? "+" : ""}${R.current_yoy.toFixed(2)}% · 数据截至 ${R.as_of}`;
+  $("ratioFoot").textContent = `创业板指 / 中证红利 · 当前比值 ${R.current_ratio.toFixed(3)} · 同比 ${R.current_yoy >= 0 ? "+" : ""}${R.current_yoy.toFixed(2)}% · 数据截至 ${R.as_of}`;
   $("macdDif").textContent = last.dif.toFixed(3);
   $("macdDea").textContent = last.dea.toFixed(3);
   $("macdHist").textContent = last.hist.toFixed(3);

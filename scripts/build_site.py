@@ -75,13 +75,14 @@ def derive_dy(code: str, price: pd.DataFrame) -> pd.Series:
 def build_ratio() -> dict:
     """ChiNext / SOE Dividend ratio, its YoY curve and weekly MACD."""
     chinext = load_index("399006")["close"]
-    soe = load_index("000825")["close"]
-    pair = pd.concat([chinext.rename("chinext"), soe.rename("soe")], axis=1).dropna()
-    ratio = pair["chinext"] / pair["soe"]
+    dividend = load_index("000922")["close"]
+    pair = pd.concat([chinext.rename("chinext"), dividend.rename("dividend")], axis=1).dropna()
+    ratio = pair["chinext"] / pair["dividend"]
     yoy = (ratio / ratio.shift(252) - 1.0) * 100.0
     yoy = yoy.replace([np.inf, -np.inf], np.nan).dropna()
-    weekly = ratio.resample("W-FRI").last().dropna()
-    weekly = weekly[weekly.index <= ratio.index[-1]]
+    weekly = yoy.resample("W-FRI").last().dropna()
+    if len(weekly) and weekly.index[-1] > yoy.index[-1]:
+        weekly.index = weekly.index[:-1].append(pd.DatetimeIndex([yoy.index[-1]]))
     ema12 = weekly.ewm(span=12, adjust=False).mean()
     ema26 = weekly.ewm(span=26, adjust=False).mean()
     dif = ema12 - ema26
