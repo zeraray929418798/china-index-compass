@@ -2,8 +2,8 @@ name: Update China index data and deploy
 
 on:
   schedule:
-    # 10:00 UTC weekdays = 18:00 Asia/Shanghai, after the A-share close.
-    - cron: "0 10 * * 1-5"
+    # 08:00 UTC weekdays = 16:00 Asia/Shanghai, after the A-share close and data refresh.
+    - cron: "0 8 * * 1-5"
   workflow_dispatch:
 
 permissions:
